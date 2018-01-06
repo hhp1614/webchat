@@ -3,6 +3,7 @@
     <input type="text" v-model="user"><br><br>
     <input type="password" v-model="passwd"><br><br>
     <button>注册</button>
+    <button>登陆</button>
   </div>
 </template>
 
