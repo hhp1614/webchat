@@ -2,7 +2,7 @@
   <div class="hello">
     <input type="text" v-model="user"><br><br>
     <input type="password" v-model="passwd"><br><br>
-    <button>提交</button>
+    <button>注册</button>
   </div>
 </template>
 
