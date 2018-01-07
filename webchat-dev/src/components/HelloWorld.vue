@@ -6,22 +6,11 @@
     <button>登陆</button>
   </div>
 </template>
-
-<script>
-export default {
-  name: 'HelloWorld',
-  data () {
-    return {
-      user: '',
-      passwd: ''
-    }
-  }
-}
 </script>
-
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1, h2 {
+h1,
+h2 {
   font-weight: normal;
 }
 ul {
@@ -36,3 +25,4 @@ a {
   color: #42b983;
 }
 </style>
+
