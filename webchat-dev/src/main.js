@@ -6,6 +6,9 @@ import router from './router'
 import axios from 'axios'
 import MuseUI from 'muse-ui'
 import 'muse-ui/dist/muse-ui.css'
+import VueSocketio from 'vue-socket.io'
+
+Vue.use(VueSocketio, 'ws://192.168.0.102:8081')
 
 Vue.use(MuseUI)
 Vue.prototype.$http = axios
