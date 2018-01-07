@@ -4,7 +4,7 @@
       <mu-card>
         <mu-flexbox orient="vertical">
           <mu-flexbox-item order="0" class="input-flex">
-            <h1>多人在线聊天</h1>
+            <h1>多人在线聊天室</h1>
           </mu-flexbox-item>
         </mu-flexbox>
         <!-- <router-link to="/index">to index</router-link>
@@ -17,7 +17,7 @@
             <mu-text-field type="password" hintText="密码" v-model="passwd" />
           </mu-flexbox-item>
           <mu-flexbox-item order="2" class="input-flex">
-            <mu-text-field type="password" hintText="确认密码" v-model="confirmPasswd" v-show="ok" />
+            <mu-text-field type="password" hintText="确认密码" v-model="confirmPasswd" v-if="ok" />
           </mu-flexbox-item>
         </mu-flexbox>
         <mu-flexbox>
@@ -40,6 +40,12 @@
         </mu-flexbox>
       </mu-card>
     </div>
+    <div class="menu-popup">
+      <mu-dialog :open="dialog" :title="dialogTitle">
+        {{dialogMsg}}
+        <mu-flat-button :label="ent" slot="actions" primary @click="close" />
+      </mu-dialog>
+    </div>
   </div>
 </template>
 
@@ -47,67 +53,102 @@
 export default {
   data() {
     return {
-      user: "",
-      passwd: "",
-      confirmPasswd: "",
+      user: '',
+      passwd: '',
+      confirmPasswd: '',
       ok: true,
-      btn: "注册",
-      message: "有账号去登陆"
+      btn: '注册',
+      message: '有账号去登陆',
+      dialogTitle: '注册成功',
+      dialogMsg: '点击进入按钮一起聊天吧！',
+      dialog: false,
+      ent: '进入',
+      successMsg: false,
     };
   },
   methods: {
+    initialize() {
+      login();
+    },
+    open() {
+      this.dialog = true;
+      if (this.successMsg == true) {
+      } else {
+        this.dialogTitle = '错误信息';
+        this.dialogMsg = '信息不允许为空!';
+        this.ent = '关闭';
+      }
+    },
+    close() {
+      this.dialog = false;
+      this.$router.replace({ path: '/index' });
+    },
     tabLogin() {
       this.ok = !this.ok;
       if (this.ok) {
-        this.btn = "注册";
-        this.message = "有账号去登陆";
+        this.btn = '注册';
+        this.message = '有账号去登陆';
       } else {
-        this.btn = "登陆";
-        this.message = "注册账号";
+        this.btn = '登陆';
+        this.message = '注册账号';
       }
     },
     // toIndex() {
-    //   this.$router.replace({ path: "/index" });
+    //   this.$router.replace({ path: '/index' });
     // },
     register() {
       this.$http
-        .post(this.api + "/register", {
+        .post(this.api + '/register', {
           user: this.user,
-          passwd: this.passwd,
-          confirmPasswd: this.confirmPasswd
+          passwd: this.passwd
         })
         .then(response => {
           let res = response.data;
           if (res.status) {
             console.log(res.data);
             console.log(res.msg);
-            sessionStorage.setItem("user", res.data);
-            this.$router.replace({ path: "/index" });
+            sessionStorage.setItem('user', res.data);
+            this.open();
           } else {
-            console.log("error!");
+            console.log('error!');
+          }
+        });
+    },
+    submit() {
+      this.$http
+        .post(this.api + '/login', {
+          user: this.user,
+          passwd: this.passwd
+        })
+        .then(response => {
+          let res = response.data;
+          if (res.status) {
+            console.log(res.data);
+            console.log(res.msg);
+            sessionStorage.setItem('user', res.data);
+            this.$router.replace({ path: '/index' });
+          } else {
+            console.log('error!');
           }
         });
     },
     login() {
       if (this.ok) {
-        this.register();
+        if (this.user && this.passwd && this.confirmPasswd) {
+          this.successMsg = true;
+          this.register();
+        } else {
+          this.open();
+          this.passwd = '';
+          this.confirmPasswd = '';
+        }
       } else {
-        this.$http
-          .post(this.api + "/login", {
-            user: this.user,
-            passwd: this.passwd
-          })
-          .then(response => {
-            let res = response.data;
-            if (res.status) {
-              console.log(res.data);
-              console.log(res.msg);
-              sessionStorage.setItem("user", res.data);
-              this.$router.replace({ path: "/index" });
-            } else {
-              console.log("error!");
-            }
-          });
+        if (this.user && this.passwd) {
+          this.successMsg = true;
+          this.submit();
+        } else {
+          this.open();
+        }
       }
     }
   }
