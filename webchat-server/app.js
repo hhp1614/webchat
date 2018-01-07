@@ -37,7 +37,7 @@ app.all('*', function (req, res, next) {
  * 注册接口
  */
 app.post('/register', function(req, res) {
-    console.log(req.body.user, req.body.passwd)
+    // console.log(req.body.user, req.body.passwd)
     if (hasUser(req.body.user)) {
         let obj = {
             status: false,
@@ -67,7 +67,7 @@ app.post('/register', function(req, res) {
  * 登陆接口
  */
 app.post('/login', function(req, res) {
-    console.log(req.body.user, req.body.passwd);
+    // console.log(req.body.user, req.body.passwd);
     if (login(req.body.user, req.body.passwd)) {
         let obj = {
             status: true,
@@ -114,9 +114,19 @@ function login(user, passwd) {
 /**
  * socket
  */
-io.on('connection', socket => {
-    socket.on('msg', data => {
+io.on('connection', (socket) => {
+    socket.user = ''
+    socket.on('enter', (data) => {
         console.log(data)
-        io.emit('msg', {msg: data.msg})
+        socket.user = data.user
+        io.emit('enter', data.user + ' was come in!')
+    })
+    socket.on('message', (data) => {
+        console.log(data)
+        io.emit('message', data)
+    })
+    socket.on('disconnect', () => {
+        console.log(socket.user)
+        io.emit('leave', socket.user + ' was left')
     })
 })
