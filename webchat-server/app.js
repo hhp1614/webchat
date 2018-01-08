@@ -119,7 +119,7 @@ io.on('connection', (socket) => {
     socket.on('enter', (data) => {
         console.log(data)
         socket.user = data.user
-        io.emit('enter', data.user + ' was come in!')
+        io.emit('enter', data.user + ' 进入房间')
     })
     socket.on('message', (data) => {
         console.log(data)
@@ -127,6 +127,8 @@ io.on('connection', (socket) => {
     })
     socket.on('disconnect', () => {
         console.log(socket.user)
-        io.emit('leave', socket.user + ' was left')
+        if (socket.user) {
+            io.emit('leave', socket.user + ' 离开房间')
+        }
     })
 })
