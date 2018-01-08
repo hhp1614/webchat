@@ -1,154 +1,128 @@
 <template>
-  <div class="start">
-    <div class="card-start">
-      <mu-card>
-        <mu-flexbox orient="vertical">
-          <mu-flexbox-item order="0" class="input-flex">
-            <h1>多人在线聊天室</h1>
-          </mu-flexbox-item>
-        </mu-flexbox>
-        <!-- <router-link to="/index">to index</router-link>
-        <a href="javascript:;" @click="toIndex">to index</a> -->
-        <mu-flexbox class="card-input" orient="vertical">
-          <mu-flexbox-item order="0" class="input-flex">
-            <mu-text-field hintText="用户名" v-model="user" />
-          </mu-flexbox-item>
-          <mu-flexbox-item order="1" class="input-flex">
-            <mu-text-field type="password" hintText="密码" v-model="passwd" />
-          </mu-flexbox-item>
-          <mu-flexbox-item order="2" class="input-flex">
-            <mu-text-field type="password" hintText="确认密码" v-model="confirmPasswd" v-if="ok" />
-          </mu-flexbox-item>
-        </mu-flexbox>
-        <mu-flexbox>
-          <mu-flexbox-item order="1" class="button-flex">
-            <mu-flat-button :label="btn" backgroundColor="skyblue" @click="login" />
-          </mu-flexbox-item>
-          <mu-flexbox-item order="0">
-          </mu-flexbox-item>
-          <mu-flexbox-item order="2">
-          </mu-flexbox-item>
-        </mu-flexbox>
-        <mu-flexbox>
-          <mu-flexbox-item order="2" class="text-small">
-            <a href="javascript:;" @click="tabLogin">{{message}}</a>
-          </mu-flexbox-item>
-          <mu-flexbox-item order="0">
-          </mu-flexbox-item>
-          <mu-flexbox-item order="1">
-          </mu-flexbox-item>
-        </mu-flexbox>
-      </mu-card>
-    </div>
-    <div class="menu-popup">
-      <mu-dialog :open="dialog" :title="dialogTitle">
-        {{dialogMsg}}
-        <mu-flat-button :label="ent" slot="actions" primary @click="close" />
-      </mu-dialog>
-    </div>
-  </div>
+  <mu-flexbox orient="vertical">
+    <mu-flexbox-item>
+      <mu-row>
+        <mu-col width="100" tablet="100" desktop="100" class="box">
+          <mu-card class="login-box" v-if="hasUser">
+            <mu-card-header>
+              <h1>登陆</h1>
+            </mu-card-header>
+            <mu-card-text>
+              <mu-text-field v-model="loginForm.user" label="用户名" fullWidth labelFloat/>
+              <mu-text-field v-model="loginForm.passwd" type="password" label="密码" fullWidth labelFloat/>
+              <mu-raised-button label="登陆" @click="login(loginForm)" primary/>
+              <mu-raised-button label="注册账号" @click="tabClick" secondary/>
+            </mu-card-text>
+          </mu-card>
+          <mu-card class="login-box" v-else>
+            <mu-card-header>
+              <h1>注册</h1>
+            </mu-card-header>
+            <mu-card-text>
+              <mu-text-field v-model="registerForm.user" label="用户名" fullWidth labelFloat/>
+              <mu-text-field v-model="registerForm.passwd" type="password" label="密码" fullWidth labelFloat/>
+              <mu-text-field v-model="registerForm.isPasswd" type="password" label="确认密码" fullWidth labelFloat/>
+              <mu-raised-button label="注册" @click="register(registerForm)" primary/>
+              <mu-raised-button label="登陆" secondary/>
+            </mu-card-text>
+          </mu-card>
+        </mu-col>
+        <mu-dialog :open="dialog">
+            {{dialogText}}
+            <mu-flat-button label="确定" slot="actions" primary @click="close"/>
+          </mu-dialog>
+      </mu-row>
+    </mu-flexbox-item>
+  </mu-flexbox>
 </template>
 
 <script>
 export default {
   data() {
     return {
-      user: '',
-      passwd: '',
-      confirmPasswd: '',
-      ok: true,
-      btn: '注册',
-      message: '有账号去登陆',
-      dialogTitle: '注册成功',
-      dialogMsg: '点击进入按钮一起聊天吧！',
+      loginForm: {
+        user: '',
+        passwd: ''
+      },
+      registerForm: {
+        user: '',
+        passwd: '',
+        isPasswd: ''
+      },
+      hasUser: true,
       dialog: false,
-      ent: '进入',
-      successMsg: false,
-    };
+      dialogText: '',
+      ok: false
+    }
   },
   methods: {
-    initialize() {
-      login();
+    tabClick() {
+      this.hasUser = !this.hasUser;
+      this.loginForm = {
+        user: '',
+        passwd: ''
+      }
+      this.registerForm = {
+        user: '',
+        passwd: '',
+        isPasswd: ''
+      }
     },
-    open() {
-      this.dialog = true;
-      if (this.successMsg == true) {
+    login(data) {
+      if (data.user && data.passwd) {
+        this.$http.post(this.api + '/login', {
+          user: data.user,
+          passwd: data.passwd
+        })
+        .then(response => {
+            let res = response.data;
+            if (res.status) {
+              sessionStorage.setItem('user', res.data);
+              this.dialog = true;
+              this.dialogText = res.msg;
+              this.ok = true;
+            } else {
+              this.dialog = true;
+              this.dialogText = res.msg;
+            }
+          })
       } else {
-        this.dialogTitle = '错误信息';
-        this.dialogMsg = '信息不允许为空!';
-        this.ent = '关闭';
+        this.dialog = true;
+        this.dialogText = '请正确填写用户名和密码';
+      }
+    },
+    register(data) {
+      let isTure = data.user && data.passwd && data.isPasswd &&  data.passwd == data.isPasswd;
+      if (isTure) {
+        this.$http.post(this.api + '/register', {
+          user: data.user,
+          passwd: data.passwd
+        })
+        .then(response => {
+            let res = response.data;
+            if (res.status) {
+              sessionStorage.setItem('user', res.data);
+              this.dialog = true;
+              this.dialogText = res.msg;
+              this.ok = true;
+            } else {
+              this.dialog = true;
+              this.dialogText = res.msg;
+            }
+          })
+      } else {
+        this.dialog = true;
+        this.dialogText = '请正确填写用户名和密码';
       }
     },
     close() {
       this.dialog = false;
-      this.$router.replace({ path: '/index' });
-    },
-    tabLogin() {
-      this.ok = !this.ok;
+      this.dialogText = '';
+      this.loginForm.passwd = '';
+      this.registerForm.passwd = '';
+      this.registerForm.isPasswd = '';
       if (this.ok) {
-        this.btn = '注册';
-        this.message = '有账号去登陆';
-      } else {
-        this.btn = '登陆';
-        this.message = '注册账号';
-      }
-    },
-    // toIndex() {
-    //   this.$router.replace({ path: '/index' });
-    // },
-    register() {
-      this.$http
-        .post(this.api + '/register', {
-          user: this.user,
-          passwd: this.passwd
-        })
-        .then(response => {
-          let res = response.data;
-          if (res.status) {
-            console.log(res.data);
-            console.log(res.msg);
-            sessionStorage.setItem('user', res.data);
-            this.open();
-          } else {
-            console.log('error!');
-          }
-        });
-    },
-    submit() {
-      this.$http
-        .post(this.api + '/login', {
-          user: this.user,
-          passwd: this.passwd
-        })
-        .then(response => {
-          let res = response.data;
-          if (res.status) {
-            console.log(res.data);
-            console.log(res.msg);
-            sessionStorage.setItem('user', res.data);
-            this.$router.replace({ path: '/index' });
-          } else {
-            console.log('error!');
-          }
-        });
-    },
-    login() {
-      if (this.ok) {
-        if (this.user && this.passwd && this.confirmPasswd) {
-          this.successMsg = true;
-          this.register();
-        } else {
-          this.open();
-          this.passwd = '';
-          this.confirmPasswd = '';
-        }
-      } else {
-        if (this.user && this.passwd) {
-          this.successMsg = true;
-          this.submit();
-        } else {
-          this.open();
-        }
+        this.$router.push({path: '/index'});
       }
     }
   }
@@ -156,26 +130,12 @@ export default {
 </script>
 
 <style lang="less">
-@text-center: center;
-.start {
-  width: 100%;
-  height: 100%;
-}
-.card-start {
-  width: 80%;
-  margin: 0 auto;
-}
-.card-start .card-input {
-  // border: 1px solid orange;
-}
-.input-flex {
-  text-align: @text-center;
-}
-.button-flex button {
-  width: 100%;
-}
-.text-small a {
-  // font-size: 0.1em;
-  text-decoration: underline;
-}
+  .box {
+    padding: 20px;
+  }
+  .login-box, .register-box {
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+  }
 </style>
