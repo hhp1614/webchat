@@ -6,29 +6,29 @@ import Index from '../components/Index.vue'
 Vue.use(Router)
 
 const router = new Router({
-  routes: [
-    {
-      path: '/',
-      name: 'Start',
-      component: Start
-    },
-    {
-      path: '/index',
-      name: 'Index',
-      component: Index,
-    }
-  ]
-})
+    routes: [
+        {
+            path: '/login',
+            name: 'Start',
+            component: Start
+        },
+        {
+            path: '/',
+            name: 'Index',
+            component: Index,
+        }
+    ]
+});
 
 /**
  * 路由拦截
  */
 router.beforeEach((to, from, next) => {
-  if (to.path === '/index' && !sessionStorage.getItem('user')) {
-    next('/')
-  } else {
-    next()
-  }
-})
+    if (to.path === '/' && !sessionStorage.getItem('user')) {
+        next('/login');
+    } else {
+        next();
+    }
+});
 
 export default router

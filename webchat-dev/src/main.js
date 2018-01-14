@@ -8,13 +8,17 @@ import MuseUI from 'muse-ui'
 import 'muse-ui/dist/muse-ui.css'
 import VueSocketio from 'vue-socket.io'
 
-Vue.use(VueSocketio, 'ws://192.168.0.102:8081')
+// Vue.use(VueSocketio, 'ws://192.168.0.102:8081')
+// Vue.use(VueSocketio, 'ws://192.168.0.102:8088')
+Vue.use(VueSocketio, 'http://39.108.190.247:80');
 
-Vue.use(MuseUI)
-Vue.prototype.$http = axios
-Vue.prototype.api = 'http://192.168.0.102:8081'
+Vue.use(MuseUI);
+Vue.prototype.$http = axios;
+// Vue.prototype.api = 'http://192.168.0.102:8081'
+// Vue.prototype.api = 'http://192.168.0.102:8088'
+Vue.prototype.api = 'http://39.108.190.247:80';
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 
 /* eslint-disable no-new */
 new Vue({
@@ -22,4 +26,4 @@ new Vue({
   router,
   template: '<App/>',
   components: { App }
-})
+});

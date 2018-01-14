@@ -1,127 +1,123 @@
 <template>
-    <!-- <h1>多人聊天室</h1>
-        <div>
-            <p v-for="(item, index) in msg" :key="index">{{item}}</p>
-        </div>
-        <input type="text" v-model="sendMsg">
-        <button @click="add">send</button> -->
-    <!-- <mu-row class="chat-warrp">
-        <mu-col width="5" tablet="10" desktop="10"></mu-col>
-        <mu-col width="90" tablet="80" desktop="80" class="chat-box">
-            <mu-col width="100" tablet="100" desktop="100">
-                <h1>多人聊天室</h1>
-            </mu-col>
-            <mu-col width="100" tablet="100" desktop="100" class="chat-box-main">
-                <mu-card style="height:100%;">
-                    <div>
-                        <p v-for="(item, index) in msg" :key="index">{{item}}</p>
+    <mu-flexbox orient="vertical" style="height: 100%">
+        <mu-appbar title="多人在线聊天室（测试版）">
+            <mu-icon-button icon="close" slot="right" @click="logout" />
+            <mu-icon-menu icon="menu" slot="left">
+                <mu-menu-item leftIcon="home" title="主页" to="/" />
+                <mu-menu-item leftIcon="account_circle" title="个人" />
+                <mu-menu-item leftIcon="settings" title="设置" />
+                <mu-menu-item leftIcon="info" title="关于" />
+            </mu-icon-menu>
+        </mu-appbar>
+        <mu-flexbox-item basis="1">
+            <mu-card class="chat-card" id="card">
+                <mu-card-text class="card-text">
+                    <div v-for="(item, index) in msg" :key="index" class="msg-box">
+                        <span class="user-name" :style="{color: item.user === user ? 'red' : 'blue'}">
+                            {{item.user}}:
+                        </span>
+                        <span>
+                            {{item.msg}}
+                        </span>
                     </div>
-                </mu-card>
-            </mu-col>
-            <mu-row class="chat-box-bottom"> -->
-
-    <!-- <mu-text-field hintText="多行文本输入，默认 3行，最大6行" multiLine :rows="3" :rowsMax="6" style="width: 80%;float:left" /> -->
-    <!-- <mu-text-field hintText="提示文字" style="width: 80%;" /><br/> -->
-    <!-- <input type="text" v-model="sendMsg"> -->
-    <!-- <mu-raised-button label="Primary" style="width:20%;height:100%;float:left" /> -->
-    <!-- <button @click="add">send</button> -->
-    <!-- </mu-row>
-        </mu-col>
-        <mu-col width="5" tablet="10" desktop="10"></mu-col>
-    </mu-row> -->
-    <mu-card class="chat-card">
-        <mu-card-header class="card-header">
-            <div>多人聊天室</div>
-        </mu-card-header>
-        <mu-card-text class="card-text">
-            <p v-for="(item, index) in msg" :key="index">
-                <!-- 进入或离开 -->
-                <span v-if="!item.user">{{item}}</span>
-
-                <!-- 聊天信息 -->
-                <span v-else>
-                    <!-- 用户名 -->
-                    <span :style="{color: item.user === name ? 'red' : 'blue'}">{{item.user}}:</span>
-                    <!-- 信息 -->
-                    <span>{{item.msg}}</span>
-                </span>
-            </p>
-        </mu-card-text>
-        <mu-card-actions class="card-flex">
-            <mu-text-field hintText="输入发送文本" class="card-input" v-model="sendMsg" />
-            <mu-raised-button label="send" @click="add" primary/>
-        </mu-card-actions>
-    </mu-card>
+                </mu-card-text>
+            </mu-card>
+        </mu-flexbox-item>
+        <mu-flexbox justify="center" align="baseline" wrap="nowrap" style="padding-top: 10px;">
+            <mu-flexbox-item style="padding-left: 10px;">
+                <mu-text-field hintText="输入发送文本" v-model="sendMsg" @keyup.native.enter="add" fullWidth />
+            </mu-flexbox-item>
+            <mu-flexbox-item grow="0" shrink="0" basis="100px">
+                <mu-raised-button label="发送" @click="add" :disabled="sendMsg ? false : true" primary/>
+            </mu-flexbox-item>
+        </mu-flexbox>
+    </mu-flexbox>
 </template>
 
 <script>
-export default {
-    data() {
-        return {
-            user: '',
-            msg: [],
-            sendMsg: '',
-            name: ''
-        }
-    },
-    mounted() {
-        this.userComeIn()
-    },
-    methods: {
-        userComeIn() {
-            let user = sessionStorage.getItem('user')
-            this.name = user;
-            this.$socket.emit('enter', { user: user })
+    export default {
+        data() {
+            return {
+                msg: [],
+                sendMsg: '',
+                user: '', // 名字
+                dom: '', // card 的 Dom 元素
+            };
         },
-        add() {
-            let obj = {
-                user: sessionStorage.getItem('user'),
-                msg: this.sendMsg
+        mounted() {
+            this.userComeIn(); // 用户进入房间
+            this.setCardHeight(); // 初始聊天内容框高度
+            this.windowResize(); // 绑定窗口大小监听事件
+        },
+        methods: {
+            setCardHeight() { // 获取并设置内容框高度为固定高度
+                this.dom = document.getElementById('card');
+                let height = this.dom.offsetHeight;
+                this.dom.style.height = height + 'px';
+            },
+            windowResize() { // 监听窗口大小变化，并重置内容框的高度
+                window.onresize = () => {
+                    this.dom.style.height = '100%';
+                    this.setCardHeight();
+                };
+            },
+            userComeIn() { // 用户进入房间
+                let user = sessionStorage.getItem('user');
+                this.user = user;
+                this.$socket.emit('enter', { user: user });
+            },
+            add() { // 发送消息
+                if (this.sendMsg) {
+                    let obj = {
+                        user: sessionStorage.getItem('user'),
+                        msg: this.sendMsg
+                    };
+                    this.$socket.emit('message', obj);
+                    this.sendMsg = '';
+                }
+            },
+            logout() {
+                sessionStorage.clear();
+                this.$router.push({ path: '/login' })
             }
-            this.$socket.emit('message', obj)
+        },
+        sockets: {
+            connect() {
+                console.log('socket connected');
+            },
+            message(data) { // 接受广播消息
+                console.log(data);
+                // let str = `${data.user}: ${data.msg}`
+                this.msg.push(data);
+            },
+            enter(val) { // 接受广播进入消息
+                // console.log(val);
+                // this.msg.push(val);
+            },
+            leave(val) { // 接受广播离开消息
+                // this.msg.push(val);
+            }
         }
-    },
-    sockets: {
-        connect() {
-            console.log('socket connected')
-        },
-        message(data) {
-            console.log(data)
-            // let str = `${data.user}: ${data.msg}`
-            this.msg.push(data)
-            this.sendMsg = ''
-        },
-        enter(val) {
-            this.msg.push(val)
-            console.log(val);
-        },
-        leave(val) {
-            this.msg.push(val)
-        }
-    }
-};
+    };
 </script>
 <style>
-.card-flex {
-  display: flex;
-}
-.chat-card {
-  height: 100%;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-}
-.card-header {
-  font-size: 20px;
-}
-.card-text {
-  flex: 1;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-shadow: 1px 1px 2px 1px #ddd;
-}
-.card-input {
-  width: 70%;
-  flex: 1;
-}
+    .chat-card {
+      height: 100%;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+    }
+    .card-text {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 1px 1px 2px 1px #ddd;
+    }
+    .msg-box {
+      word-wrap: break-word;
+    }
+    .user-name {
+      font-weight: bold;
+    }
 </style>
