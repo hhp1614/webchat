@@ -1,20 +1,30 @@
-const app = require('express')()
+const express = require('express')
+const app = express()
 const server = require('http').Server(app)
 const io = require('socket.io')(server)
 const bodyParser = require('body-parser')
 const fs = require('fs')
+const mysql = require('mysql')
 const port = 8081
+
+const db = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '123456',
+    database: 'webchat'
+})
+
+// db.query('INSERT INTO user_table (username, password) VALUES ("superAdmin", "1614");')
+// db.query('INSERT INTO user_table VALUES (0, "Flandre", "1614");')
+
+// db.query('SELECT * FROM user_table WHERE username="admin";')
+
 
 /**
  * 监听端口
  */
 server.listen(port)
 console.log('server started on ' + port)
-
-var json = fs.readFileSync('./user.json', 'utf8')
-if (json) json = [...JSON.parse(json)]
-else json = []
-console.log(json)
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
@@ -36,80 +46,68 @@ app.all('*', function (req, res, next) {
 /**
  * 注册接口
  */
-app.post('/register', function(req, res) {
-    // console.log(req.body.user, req.body.passwd)
-    if (hasUser(req.body.user)) {
-        let obj = {
-            status: false,
-            msg: '该用户名已注册'
+app.post('/register', function (req, res) {
+    let username = req.body.user
+    let password = req.body.passwd
+    let userInfo = {}
+    db.query('SELECT * FROM user_table WHERE username="' + req.body.user + '";', (err, data) => {
+        if (err) {
+            console.log(err)
+        } else {
+            userInfo = data[0]
+            if (userInfo) {
+                let obj = {
+                    status: false,
+                    msg: '该用户名已注册'
+                }
+                res.send(obj)
+            } else {
+                db.query('INSERT INTO user_table VALUES (0, "' + username + '", "' + password + '");', (err, data) => {
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        let obj = {
+                            status: true,
+                            msg: '注册成功',
+                            data: username
+                        }
+                        res.send(obj)
+                    }
+                })
+            }
         }
-        res.send(obj)
-    } else {
-        let newUser = {
-            user: req.body.user,
-            passwd: req.body.passwd
-        }
-        let obj = {
-            status: true,
-            msg: '注册成功',
-            data: newUser.user
-        }
-        json.push(newUser)
-        fs.writeFile('./user.json', JSON.stringify(json), function(err) {
-            if (err) throw err
-            console.log('文件写入成功')
-            res.send(obj)
-        })
-    }
+    })
 })
 
 /**
  * 登陆接口
  */
-app.post('/login', function(req, res) {
-    // console.log(req.body.user, req.body.passwd);
-    if (login(req.body.user, req.body.passwd)) {
-        let obj = {
-            status: true,
-            data: req.body.user,
-            msg: '登陆成功'
+app.post('/login', function (req, res) {
+    let username = req.body.user
+    let password = req.body.passwd
+    let userInfo = {}
+    db.query('SELECT * FROM user_table WHERE username="' + req.body.user + '";', (err, data) => {
+        if (err) {
+            console.log(err)
+        } else {
+            userInfo = data[0]
+            if (userInfo && userInfo.password === password) {
+                let obj = {
+                    status: true,
+                    data: username,
+                    msg: '登陆成功'
+                }
+                res.send(obj)
+            } else {
+                let obj = {
+                    status: false,
+                    msg: '用户名或密码错误'
+                }
+                res.send(obj)
+            }
         }
-        res.send(obj)
-    } else {
-        let obj = {
-            status: false,
-            msg: '用户名或密码错误'
-        }
-        res.send(obj)
-    }
-    res.end()
+    })
 })
-
-/**
- * 校验用户名是否已存在
- */
-function hasUser(user) {
-    let hasUser = false
-    json.forEach(item => {
-        if (item.user === user) {
-            hasUser = true
-        }
-    })
-    return hasUser
-}
-
-/**
- * 校验登陆
- */
-function login(user, passwd) {
-    let logined = false
-    json.forEach(item => {
-        if (item.user === user && item.passwd === passwd) {
-            logined = true
-        }
-    })
-    return logined
-}
 
 /**
  * socket
